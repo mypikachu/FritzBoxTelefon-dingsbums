@@ -37,3 +37,76 @@
   END IF
 
  END SUB
+ 
+'
+'
+FUNCTION HTTPTransferRtMpfd(sMode AS STRING, sLink AS STRING, sFormdata AS STRING, OPT sRow AS STRING) AS STRING
+' Link: Link zur Webpage
+' Mode "Get" oder "Post"
+' Microsoft WinHTTP Services, version 5.1
+' PowerBasic PB/WIN 9
+'
+ LOCAL v1 AS VARIANT, v2 AS VARIANT, v3 AS VARIANT, v4 AS VARIANT
+ LOCAL nL1 AS LONG, nL2 AS LONG
+ LOCAL sHost AS STRING
+'
+ DIM objXMLHTTP AS DISPATCH
+'
+ SET objXMLHTTP = CreateObject("WinHttp.WinHttpRequest.5.1")
+'
+ sHost = MID$(sLink, LEN("://") + INSTR(sLink, "://") , INSTR(LEN("://") + INSTR(sLink, "://"),sLink, "/") - (LEN("://") + INSTR(sLink, "://")))
+'
+ v1 = sMode ' "GET " oder "POST "
+ v2 = sLink ' "http://192.168.2.1/html/top_start_passwort.htm"
+ v3 = 0
+'
+ OBJECT CALL objXMLHTTP.OPEN(v1, v2, v3)
+'
+' v1 = "Content-Type"
+' v2 = "application/x-www-form-urlencoded"
+' OBJECT CALL objXMLHTTP.setRequestHeader(v1, v2)
+'
+ IF TALLY(sHost, ".") = 3 THEN
+' MSGBOX sHost
+  v1 = "HOST" : v2 = sHost
+  OBJECT CALL objXMLHTTP.setRequestHeader (v1, v2)
+ END IF
+ v1 = "Connection" : v2 = "Keep-Alive"
+ OBJECT CALL objXMLHTTP.setRequestHeader(v1, v2)
+ IF sRow = "" THEN
+  v1 = "Content-Type" : v2 = "application/x-www-form-urlencoded"
+ ELSE
+  v1 = "Content-Type" : v2 = "multipart/form-data; boundary=" + sRow
+ END IF
+ OBJECT CALL objXMLHTTP.setRequestHeader(v1, v2)
+ v1 = "Content-Length" : v2 = LEN(sFormdata)
+ OBJECT CALL objXMLHTTP.setRequestHeader(v1, v2)
+'
+ sRow = ""
+'
+ v1 = sFormdata ' ""
+ OBJECT CALL objXMLHTTP.SEND(v1)
+'
+ OBJECT GET objXMLHTTP.STATUS TO v2
+ OBJECT GET objXMLHTTP.readyState TO v3
+ '
+ nL1 = VARIANT#(v3) : nL2 = VARIANT#(v2)
+'
+ IF nL1 = 0 AND nL2 = 200 THEN ' "WinHttp.WinHttpRequest.5.1"
+'
+  OBJECT GET objXMLHTTP.getAllResponseHeaders TO v1 : sHost = VARIANT$(v1)
+  IF sHost <> "" THEN sRow = sHost
+'  MSGBOX format$(VARIANTVT(v1)) + $crlf + sHost
+'
+  OBJECT GET objXMLHTTP.responseText TO v1
+'  MSGBOX FORMAT$(VARIANTVT(v1)) + $CRLF + sHost
+'
+  FUNCTION = VARIANT$(v1)
+'
+ END IF
+'
+ SET objXMLHTTP = NOTHING
+'
+END FUNCTION
+'
+'        
