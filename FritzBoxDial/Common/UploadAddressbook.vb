@@ -1,3 +1,37 @@
+    ''' <summary>
+    ''' Lädt ein Fritz!Box Telefonbuch im XML Format auf die Fritz!Box hoch. 
+    ''' </summary>
+    ''' <param name="sPhonebookId">
+    ''' ID des Telefonbuches: 
+    ''' 0 = Haupttelefonbuch
+    ''' 255 = Intern
+    ''' 256 = Clip Info</param>
+    ''' <param name="XMLAdressbuch">Das Telefonbuch im XML Format</param>
+    ''' <returns>Bollean, ob Upload erfolgreich war oder halt nicht.</returns>
+    Friend Function UploadAddressbook(ByVal sPhonebookId As String, ByVal XMLAdressbuch As String) As Boolean
+        DIM row AS STRING
+        Dim cmd As String
+        UploadAddressbook = False
+
+        If SID = C_DP.P_Def_SessionID Then FBLogin(True)
+        If Not SID = C_DP.P_Def_SessionID And Len(SID) = Len(C_DP.P_Def_SessionID) Then
+
+            row = "---" & 12345 + Rnd() * 16777216 ' row muss sein sonst geht es nicht
+            cmd = row & vbCrLf & "Content-Disposition: form-data; name=""sid""" & vbCrLf & vbCrLf & SID & vbCrLf _
+            & row & vbCrLf & "Content-Disposition: form-data; name=""PhonebookId""" & vbCrLf & vbCrLf & sPhonebookId & vbCrLf _
+            & row & vbCrLf & "Content-Disposition: form-data; name=""PhonebookImportFile""" & vbCrLf & vbCrLf & "@" + XMLAdressbuch + ";type=text/xml" & vbCrLf _
+            & row & "--" & vbCrLf
+
+            UploadAddressbook = C_hf.httpPOST(P_Link_FB_ExportAddressbook, cmd, FBEncoding).Contains("Das Telefonbuch der FRITZ!Box wurde wiederhergestellt.")
+
+        Else
+            C_hf.FBDB_MsgBox(C_DP.P_FritzBox_Dial_Error3(SID), MsgBoxStyle.Critical, "UploadAddressbook")
+        End If
+    End Function
+
+ 
+ 
+ 
  Friend SUB UploadAddressbook(BYVAL BookID AS STRING, BYVAL Adressbuch AS STRING)
   ' To do: Mehrere Telefonbucher sind möglich. Zugriff prüfen.
   ' http://www.ip-phone-forum.de/showthread.php?t=226605
